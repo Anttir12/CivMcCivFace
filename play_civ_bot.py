@@ -61,7 +61,7 @@ class CivMcCivFace(discord.Client):
                 await self.reset(message)
             else:
                 await message.channel.send(":poop: I don't understand you :poop:")
-        if message.content == "Mikä olis paras civ taktiikka?":
+        if message.content == "Mika olis paras civ taktiikka?":
             await message.channel.send(":radioactive: Nuke everything :radioactive:")
 
     async def create_game(self, message):
@@ -138,15 +138,39 @@ class CivMcCivFace(discord.Client):
         mention = self.get_mention_for(discord_username)
         if not mention:
             mention = player_name
-        asyncio.run_coroutine_threadsafe(channel.send("{} Your turn (turn {})".format(mention, turn_number)), self.loop)
+        asyncio.run_coroutine_threadsafe(channel.send("{} your turn (turn {}, {})".format(mention, turn_number, game_name)), self.loop)
+        self.send_on_deck_message(game_name, player_name, channel)
+        self.brains.save_game_database();
 
     def get_mention_for(self, discord_username):
-        mention = None
+        mention = discord_username
         if discord_username:
             discord_user = self.guild.get_member_named(discord_username)
             if discord_user:
                 mention = discord_user.mention
         return mention
+
+    def send_on_deck_message(self, game_name, player_name, channel):
+        next_player = self.get_next_player(game_name,player_name)
+        mention = self.get_mention_for(next_player)
+        if next_player is not None:
+            asyncio.run_coroutine_threadsafe(channel.send("{} you're on deck.".format(mention)), self.loop)
+
+    def get_next_player(self, game_name, player_name):
+        players = self.brains.game_db.get(game_name).get("player_turn_order")
+        if player_name not in players:
+            players.append(player_name)
+            self.brains.save_game_database()
+            return
+        next_player = self.get_player_from_list(player_name, players)
+        return self.brains.get_discord_username(game_name, next_player)
+
+    def get_player_from_list(self, player_name, players):
+        index = players.index(player_name)
+        if index < len(players) - 1:
+            return players[index+1]
+        else:
+            return players[0]
 
 class MvCivBrains:
 
@@ -162,7 +186,7 @@ class MvCivBrains:
         if game_name in self.game_db:
             return ":poop:ERROR: game \"{}\" already exists".format(game_name)
         else:
-            game_data = {"turn": 0, "players": {}, "channel": {"id": channel_id, "name": channel_name}}
+            game_data = {"turn": 0, "players": {}, "channel": {"id": channel_id, "name": channel_name}, "player_turn_order":[""]}
             self.save_game_data(game_name, game_data)
         return None
 
