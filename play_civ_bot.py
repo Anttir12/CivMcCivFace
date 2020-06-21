@@ -32,11 +32,15 @@ PREFIX = "$"
 
 class CivMcCivFace(discord.Client):
 
+    def __init__(self, **options):
+        super().__init__(**options)
+        self.guild = None
+        self.brains = MvCivBrains()
+
     async def on_ready(self):
         print(self.guilds)
-        guild = discord.utils.find(lambda g: g.name == GUILD_NAME, self.guilds)
-        print(f'{self.user} has connected to Discord to the following server: {guild.name} ({guild.id})!')
-        self.guild = guild
+        self.guild = discord.utils.find(lambda g: g.name == GUILD_NAME, self.guilds)
+        print(f'{self.user} has connected to Discord to the following server: {self.guild.name} ({self.guild.id})!')
 
     async def on_message(self, message):
         if message.author == self.user:
@@ -57,6 +61,8 @@ class CivMcCivFace(discord.Client):
                 await self.reset(message)
             else:
                 await message.channel.send(":poop: I don't understand you :poop:")
+        if message.content == "Mikä olis paras civ taktiikka?":
+            await message.channel.send(":radioactive: Nuke everything :radioactive:")
 
     async def create_game(self, message):
         try:
@@ -64,14 +70,12 @@ class CivMcCivFace(discord.Client):
         except IndexError:
             await message.channel.send(":poop:ERROR: try this: {}create_game:<game_name>".format(PREFIX))
             return
-        if self.get_game_data(game_name):
-            await message.channel.send(":poop:ERROR: game \"{}\" already exists".format(game_name))
-            return
-        else:
-            game_data = {"turn": 0, "players": {}, "channel": {"id": message.channel.id, "name": message.channel.name}}
-            self.save_game_data(game_name, game_data)
 
-        await message.channel.send("OK, I created a new game called {}".format(game_name))
+        error = self.brains.create_game(game_name, message.channel.id, message.channel.name)
+        if error:
+            await message.channel.send(error)
+        else:
+            await message.channel.send("OK, I created a new game called {}".format(game_name))
 
     async def delete_game(self, message):
         try:
@@ -79,17 +83,16 @@ class CivMcCivFace(discord.Client):
         except IndexError:
             await message.channel.send(":poop:ERROR: try this: {}delete_game:<game_name>".format(PREFIX))
             return
-        game_db = self.get_game_database()
-        if game_name not in game_db:
-            await message.channel.send(":poop:ERROR: game \"{}\" does not exist".format(game_name))
-            return
-        del game_db[game_name]
-        self.save_game_database(game_db)
-        await message.channel.send("Ok, I deleted the game \"{}\"".format(game_name))
+        error = self.brains.delete_game(game_name)
+        if error:
+            await message.channel.send(":poop:ERROR: try this: {}delete_game:<game_name>".format(PREFIX))
+        else:
+            await message.channel.send("Ok, I deleted the game \"{}\"".format(game_name))
 
     async def list_games(self, message):
-        game_db = self.get_game_database()
-        await message.channel.send("Here are currently tracked games:\n{}".format(json.dumps(game_db, indent=4, sort_keys=True)))
+        game_db = self.brains.game_db
+        await message.channel.send("Here are currently tracked games:\n{}".format(json.dumps(game_db, indent=4,
+                                                                                             sort_keys=True)))
 
     async def add_player_to_game(self, message):
         try:
@@ -100,13 +103,11 @@ class CivMcCivFace(discord.Client):
         except IndexError:
             await message.channel.send(":poop:ERROR: try this: {}add_player:<game_name> <ingame_name> <discord_name>".format(PREFIX))
             return
-        game_data = self.get_game_data(game_name)
-        if not game_data:
-            await message.channel.send(":poop:ERROR: Could not find game \"{}\"".format(game_name))
-            return
-        game_data["players"][ingame_name] = discord_name
-        self.save_game_data(game_name, game_data)
-        await message.channel.send("{} - {} added to {}".format(ingame_name, discord_name, game_name))
+        error = self.brains.add_player_to_game(game_name, ingame_name, discord_name)
+        if error:
+            await message.channel.send("error")
+        else:
+            await message.channel.send("{} - {} added to {}".format(ingame_name, discord_name, game_name))
 
     async def remove_player_from_game(self, message):
         try:
@@ -116,19 +117,14 @@ class CivMcCivFace(discord.Client):
         except IndexError:
             await message.channel.send(":poop:ERROR: try this: {}remove_player:<game_name> <ingame_name>".format(PREFIX))
             return
-        game_data = self.get_game_data(game_name)
-        if not game_data:
-            await message.channel.send(":poop:ERROR: Could not find game \"{}\"".format(game_name))
-            return
-        if ingame_name in game_data["players"]:
-            del game_data["players"][ingame_name]
-            self.save_game_data(game_name, game_data)
-            await message.channel.send("{} removed from {}".format(ingame_name, game_name))
+        error = self.brains.remove_player_from_game(game_name, ingame_name)
+        if error:
+            await message.channel.send(error)
         else:
-            await message.channel.send(":poop:ERROR: Player {} not in game \"{}\"".format(ingame_name, game_name))
+            await message.channel.send("{} removed from {}".format(ingame_name, game_name))
 
     async def reset(self, message):
-        self.save_game_database({})
+        self.brains.reset()
         await message.channel.send("Game DB has been reset")
 
     def handle_webhook_message(self, values: dict):
@@ -136,35 +132,75 @@ class CivMcCivFace(discord.Client):
         player_name = values["value2"]
         turn_number = values["value3"]
 
-        game_data = self.get_game_data(game_name)
-        if not game_data:
-            return
-        discord_username = game_data["players"].get(player_name)
+        channel_id = self.brains.get_channel_for_game(game_name)
+        channel = self.get_channel(channel_id)
+        discord_username = self.brains.get_discord_username(game_name, player_name)
+        mention = self.get_mention_for(discord_username)
+        if not mention:
+            mention = player_name
+        asyncio.run_coroutine_threadsafe(channel.send("{} Your turn (turn {})".format(mention, turn_number)), self.loop)
+
+    def get_mention_for(self, discord_username):
         mention = None
         if discord_username:
             discord_user = self.guild.get_member_named(discord_username)
             if discord_user:
                 mention = discord_user.mention
-        if not mention:
-            mention = player_name
-        channel = self.get_channel(game_data["channel"]["id"])
-        asyncio.run_coroutine_threadsafe(channel.send("{} Your turn (turn {})".format(mention, turn_number)), self.loop)
+        return mention
 
-    def get_game_database(self):
-        game_db = dict()
+class MvCivBrains:
+
+    def __init__(self):
         with open(GAME_FILE, "r") as file:
-            game_db = json.loads(file.read())
-        return game_db
+            self.game_db = json.loads(file.read())
 
-    def save_game_database(self, game_db: dict):
-        with open(GAME_FILE, "w") as file:
-            file.write(json.dumps(game_db))
+    def reset(self):
+        self.game_db = {}
+        self.save_game_database()
+
+    def create_game(self, game_name, channel_id, channel_name):
+        if game_name in self.game_db:
+            return ":poop:ERROR: game \"{}\" already exists".format(game_name)
+        else:
+            game_data = {"turn": 0, "players": {}, "channel": {"id": channel_id, "name": channel_name}}
+            self.save_game_data(game_name, game_data)
+        return None
+
+    def delete_game(self, game_name):
+        if game_name not in self.game_db:
+            return ":poop:ERROR: game \"{}\" does not exist".format(game_name)
+        del self.game_db[game_name]
+        self.save_game_database()
+
+    def add_player_to_game(self, game_name, ingame_name, discord_name):
+        game_data = self.game_db.get(game_name)
+        if not game_data:
+            return ":poop:ERROR: Could not find game \"{}\"".format(game_name)
+        game_data["players"][ingame_name] = discord_name
+        self.save_game_data(game_name, game_data)
+
+    def remove_player_from_game(self, game_name, ingame_name):
+        game_data = self.game_db.get(game_name)
+        if not game_data:
+            return ":poop:ERROR: Could not find game \"{}\"".format(game_name)
+        if ingame_name not in game_data["players"]:
+            return ":poop:ERROR: Player {} not in game \"{}\"".format(ingame_name, game_name)
+        else:
+            del game_data["players"][ingame_name]
+            self.save_game_database()
+
+    def save_game_database(self):
+        with open(GAME_FILE, "w") as f:
+            f.write(json.dumps(self.game_db))
 
     def save_game_data(self, game_name: str, data: dict):
-        game_db = self.get_game_database()
-        game_db[game_name] = data
-        self.save_game_database(game_db)
+        self.game_db[game_name] = data
+        self.save_game_database()
 
-    def get_game_data(self, game_name: str):
-        game_db = self.get_game_database()
-        return game_db.get(game_name)
+    def get_discord_username(self, game_name, player_name):
+        game_data = self.game_db.get(game_name)
+        return game_data["players"].get(player_name) if game_data else None
+
+    def get_channel_for_game(self, game_name):
+        game_data = self.game_db.get(game_name)
+        return game_data.get("channel", {}).get("id") if game_data else None
