@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# JetBrains
+.idea/
+
+game_file.json
+global_settings.json

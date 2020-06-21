@@ -1,2 +1,2 @@
 # CivMcCivFace
-Discord bot for 
+Discord bot for Civ6 Play by cloud
