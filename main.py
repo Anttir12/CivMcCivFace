@@ -1,41 +1,32 @@
 import os
 import threading
 
-from flask import Flask, request
-
-from play_civ_bot import CivMcCivFace
-
 from dotenv import load_dotenv
+
+from civ_mc_civ_face import http_server
+from civ_mc_civ_face.mc_civ_bot import CivMcCivFace
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-app = Flask("CivBot")
-civ_mc_civ_face = CivMcCivFace()
+
+def main():
+    bot = CivMcCivFace(command_prefix="!")
+    http_server = threading.Thread(target=run_server, args=(bot,))
+    discord_bot = threading.Thread(target=run_bot, args=(bot,))
+
+    discord_bot.start()
+    http_server.start()
 
 
-def run_server():
-    app.run()
+def run_server(bot):
+    http_server.bot = bot
+    http_server.app.run()
 
 
-def run_bot():
-    civ_mc_civ_face.run(TOKEN)
+def run_bot(bot):
+    bot.run(TOKEN)
 
 
-@app.route("/")
-def index():
-    return "Hello"
-
-
-@app.route("/play-civ/webhook", methods=["POST"])
-def play_civ_webhook():
-    data = request.json
-    civ_mc_civ_face.handle_webhook_message(data)
-    return "OK"
-
-
-http_server = threading.Thread(target=run_server)
-discord_bot = threading.Thread(target=run_bot)
-http_server.start()
-discord_bot.start()
-
+if __name__ == "__main__":
+    main()
