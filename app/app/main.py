@@ -36,11 +36,10 @@ bot = CivMcCivFace(command_prefix="!")
 
 class App(Flask):
 
-    def run(self, **kwargs):
-        logger.info("Running Flask...")
+    def __init__(self, import_name):
+        super().__init__(import_name)
         discord_bot = threading.Thread(target=self.run_bot, args=(bot,))
         discord_bot.start()
-        super().run(**kwargs)
 
     def run_bot(self, bot):
         logger.info("Run bot called... TOKEN: {}".format(TOKEN))
