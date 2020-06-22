@@ -3,8 +3,8 @@ import threading
 
 from dotenv import load_dotenv
 
-from civ_mc_civ_face import http_server
-from civ_mc_civ_face.mc_civ_bot import CivMcCivFace
+from app.app.civ_mc_civ_face import http_server
+from app.app.civ_mc_civ_face.mc_civ_bot import CivMcCivFace
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
