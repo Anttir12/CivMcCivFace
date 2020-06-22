@@ -1,5 +1,5 @@
 import json
-
+import logging
 from discord.ext import commands
 
 from app.civ_mc_civ_face.mc_civ_brains import McCivBrains, McCivBrainException
@@ -13,6 +13,7 @@ class Game(commands.Cog):
     @commands.command()
     async def create_game(self, ctx, game_name):
         """ Creates new game to track """
+        logging.info("Attempting to create game \"{}\"".format(game_name))
         try:
             self.bot_brains.create_game(game_name, ctx.channel.id, ctx.channel.name)
             await ctx.send("OK, I created a new game called {}".format(game_name))
