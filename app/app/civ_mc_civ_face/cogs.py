@@ -2,7 +2,7 @@ import json
 
 from discord.ext import commands
 
-from app.app.civ_mc_civ_face.mc_civ_brains import McCivBrains, McCivBrainException
+from app.civ_mc_civ_face.mc_civ_brains import McCivBrains, McCivBrainException
 
 
 class Game(commands.Cog):

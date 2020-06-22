@@ -6,8 +6,8 @@ from discord.ext import commands
 from discord.ext.commands import MissingRequiredArgument, CommandNotFound
 from dotenv import load_dotenv
 
-from app.app.civ_mc_civ_face.cogs import Game
-from app.app.civ_mc_civ_face.mc_civ_brains import McCivBrains
+from app.civ_mc_civ_face.cogs import Game
+from app.civ_mc_civ_face.mc_civ_brains import McCivBrains
 
 load_dotenv()
 GAME_FILE = os.getenv("GAME_FILE_PATH")
