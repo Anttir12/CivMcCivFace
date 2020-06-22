@@ -34,19 +34,15 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 bot = CivMcCivFace(command_prefix="!")
 
 
-class App(Flask):
-
-    def __init__(self, import_name):
-        super().__init__(import_name)
-        discord_bot = threading.Thread(target=self.run_bot, args=(bot,))
-        discord_bot.start()
-
-    def run_bot(self, bot):
-        logger.info("Run bot called... TOKEN: {}".format(TOKEN))
-        bot.run(TOKEN)
+def run_bot():
+    logger.info("Run bot called... TOKEN: {}".format(TOKEN))
+    bot.run(TOKEN)
 
 
-app = App("CivBot")
+discord_bot = threading.Thread(target=run_bot)
+discord_bot.start()
+
+app = Flask("CivBot")
 
 
 @app.route("/")
