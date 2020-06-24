@@ -14,7 +14,7 @@ bot = CivMcCivFace(command_prefix="!")
 def main():
     discord_bot = threading.Thread(target=bot.run, args=(TOKEN,))
     discord_bot.start()
-    http_server.app.run()
+    http_server.app.run(port=8888)
 
 
 if __name__ == "__main__":
