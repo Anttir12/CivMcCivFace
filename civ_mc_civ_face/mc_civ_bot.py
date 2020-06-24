@@ -1,5 +1,6 @@
 import asyncio
 import os
+import logging
 
 import discord
 from discord.ext import commands
@@ -32,18 +33,29 @@ else:
 GUILD_NAME = os.getenv("DISCORD_GUILD_NAME")
 
 
+logger = logging.getLogger("bot")
+
+
 class CivMcCivFace(commands.Bot):
 
     def __init__(self, **options):
-        super().__init__(**options)
+        logger.info("Initialising bot!")
+
+        super(CivMcCivFace, self).__init__(**options)
         self.guild = None
         self.brains = McCivBrains(GAME_FILE)
         self.add_cog(Game(self.brains))
+        logger.info("Bot initialised GUILD_NAME: {}".format(GUILD_NAME))
+
+    def run(self, *args, **kwargs):
+        logger.info("Running bot!")
+        super(CivMcCivFace, self).run(*args, **kwargs)
 
     async def on_ready(self):
-        print(self.guilds)
+        logger.info("Bot ready!")
+        logger.info(self.guilds)
         self.guild = discord.utils.find(lambda g: g.name == GUILD_NAME, self.guilds)
-        print(f'{self.user} has connected to Discord to the following server: {self.guild.name} ({self.guild.id})!')
+        logger.info(f'{self.user} has connected to Discord to the following server: {self.guild.name} ({self.guild.id})!')
 
     async def on_message(self, message):
         if message.author == self.user:

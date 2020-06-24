@@ -1,15 +1,20 @@
-from sanic import Sanic
+import logging
+
+from sanic import Sanic, response
 from main import bot
+
+logger = logging.getLogger("server")
 
 app = Sanic("CivBot")
 
+
 @app.route("/")
 async def index(request):
-    return "Hello"
+    return response.html('<p>Hello world!</p>')
 
 
 @app.route("/play-civ/webhook", methods=["POST"])
 def play_civ_webhook(request):
     data = request.json
     bot.handle_webhook_message(data)
-    return "OK"
+    return response.json({"status": "ok"})
