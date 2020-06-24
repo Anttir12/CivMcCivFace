@@ -1,22 +1,15 @@
-import os
+from sanic import Sanic
+from main import bot
 
-from flask import Flask, request
-
-from dotenv import load_dotenv
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-
-app = Flask("CivBot")
-bot = None
+app = Sanic("CivBot")
 
 @app.route("/")
-def index():
+async def index(request):
     return "Hello"
 
 
 @app.route("/play-civ/webhook", methods=["POST"])
-def play_civ_webhook():
+def play_civ_webhook(request):
     data = request.json
     bot.handle_webhook_message(data)
     return "OK"
