@@ -1,36 +1,12 @@
 import asyncio
-import os
 import logging
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import MissingRequiredArgument, CommandNotFound
-from dotenv import load_dotenv
 
 from civ_mc_civ_face.cogs import Game
 from civ_mc_civ_face.mc_civ_brains import McCivBrains
-
-load_dotenv()
-GAME_FILE = os.getenv("GAME_FILE_PATH")
-GLOBAL_SETTINGS = os.getenv("GLOBAL_SETTINGS")
-bot_location = os.getcwd()
-if not GAME_FILE:
-    GAME_FILE = os.path.join(bot_location, "game_file.json")
-if os.path.exists(GAME_FILE):
-    if not os.path.isfile(GAME_FILE):
-        raise Exception("{} exists and is not a file!")
-else:
-    with open(GAME_FILE, "w") as file:
-        file.write("{}")
-if not GLOBAL_SETTINGS:
-    GLOBAL_SETTINGS = os.path.join(bot_location, "global_settings.json")
-if os.path.exists(GLOBAL_SETTINGS):
-    if not os.path.isfile(GLOBAL_SETTINGS):
-        raise Exception("{} exists and is not a file!")
-else:
-    with open(GLOBAL_SETTINGS, "w") as file:
-        file.write("{}")
-GUILD_NAME = os.getenv("DISCORD_GUILD_NAME")
 
 
 logger = logging.getLogger("bot")
@@ -38,14 +14,16 @@ logger = logging.getLogger("bot")
 
 class CivMcCivFace(commands.Bot):
 
-    def __init__(self, **options):
+    def __init__(self, game_file, guild_name, global_settings, **options):
         logger.info("Initialising bot!")
 
         super(CivMcCivFace, self).__init__(**options)
+        self.guild_name = guild_name
+        self.gloval_settings = global_settings  # Not used yet
         self.guild = None
-        self.brains = McCivBrains(GAME_FILE)
+        self.brains = McCivBrains(game_file)
         self.add_cog(Game(self.brains))
-        logger.info("Bot initialised GUILD_NAME: {}".format(GUILD_NAME))
+        logger.info("Bot initialised guild_name: {}".format(guild_name))
 
     def run(self, *args, **kwargs):
         logger.info("Running bot!")
@@ -54,7 +32,7 @@ class CivMcCivFace(commands.Bot):
     async def on_ready(self):
         logger.info("Bot ready!")
         logger.info(self.guilds)
-        self.guild = discord.utils.find(lambda g: g.name == GUILD_NAME, self.guilds)
+        self.guild = discord.utils.find(lambda g: g.name == self.guild_name, self.guilds)
         logger.info(f'{self.user} has connected to Discord to the following server: {self.guild.name} ({self.guild.id})!')
 
     async def on_message(self, message):
