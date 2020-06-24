@@ -40,7 +40,7 @@ bot = CivMcCivFace(GAME_FILE, GUILD_NAME, GLOBAL_SETTINGS, command_prefix="!")
 
 
 async def start_bot():
-    logger.info("Staring bot with token: {}".format(TOKEN))
+    logger.info("Staring bot")
     await bot.start(TOKEN)
 
 
