@@ -38,6 +38,36 @@ class Game(commands.Cog):
             await self.send_error_message(ctx, e)
 
     @commands.command()
+    async def add_me(self, ctx, game_name, ingame_name):
+        """ Adds player to the game. This allows bot to add mention to the next turn messages for this user """
+        try:
+            author = str(ctx.author)
+            self.bot_brains.add_player_to_game(game_name, ingame_name, author)
+            await ctx.send("{} - {} added to {}".format(ingame_name, author, game_name))
+        except McCivBrainException as e:
+            await self.send_error_message(ctx, e)
+
+    @commands.command()
+    async def toggle_mention_me(self, ctx, game_name):
+        """ Disables/enables bot mentioning you on messages """
+        try:
+            author = str(ctx.author)
+            mention = self.bot_brains.toggle_mention(game_name, author)
+            await ctx.send("Mention {} in game {}: {}".format(author, game_name, mention))
+        except McCivBrainException as e:
+            await self.send_error_message(ctx, e)
+
+    @commands.command()
+    async def toggle_early_mention(self, ctx, game_name):
+        """ Disables/enables bot early mentioning you: 'X you're on deck' """
+        try:
+            author = str(ctx.author)
+            mention = self.bot_brains.toggle_early_mention(game_name, author)
+            await ctx.send("Early mention {} in game {}: {}".format(author, game_name, mention))
+        except McCivBrainException as e:
+            await self.send_error_message(ctx, e)
+
+    @commands.command()
     async def remove_player(self, ctx, game_name, ingame_name):
         """ Remove player from the game. This user no longer gets mentioned by the bot """
         try:

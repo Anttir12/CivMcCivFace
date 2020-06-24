@@ -29,11 +29,15 @@ class McCivBrains:
         del self.game_db[game_name]
         self.save_game_database()
 
-    def add_player_to_game(self, game_name, ingame_name, discord_name):
+    def add_player_to_game(self, game_name, in_game_name, discord_name):
         game_data = self.game_db.get(game_name)
         if not game_data:
             raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
-        game_data["players"][ingame_name] = discord_name
+        game_data["players"][in_game_name] = {
+            "discord_name": discord_name,
+            "mention": True,
+            "early_mention": False
+        }
         self.save_game_data(game_name, game_data)
 
     def remove_player_from_game(self, game_name, ingame_name):
@@ -56,8 +60,30 @@ class McCivBrains:
 
     def get_discord_username(self, game_name, player_name):
         game_data = self.game_db.get(game_name)
-        return game_data["players"].get(player_name) if game_data else None
+        player = game_data["players"].get(player_name)
+        if not player:
+            return None
+        name = player.get("discord_name")
+        return name
 
     def get_channel_for_game(self, game_name):
         game_data = self.game_db.get(game_name)
         return game_data.get("channel", {}).get("id") if game_data else None
+
+    def toggle_mention(self, game_name, author):
+        game_data = self.game_db.get(game_name)
+        for player, data in game_data.get("players").items():
+            discord_name = data.get("discord_name")
+            if discord_name == author:
+                data["mention"] = not data.get("mention")
+                self.save_game_database()
+                return data.get("mention")
+
+    def toggle_early_mention(self, game_name, author):
+        game_data = self.game_db.get(game_name)
+        for player, data in game_data.get("players").items():
+            discord_name = data.get("discord_name")
+            if discord_name == author:
+                data["early_mention"] = not data.get("early_mention")
+                self.save_game_database()
+                return data.get("early_mention")
