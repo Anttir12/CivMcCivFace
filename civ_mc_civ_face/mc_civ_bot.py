@@ -52,6 +52,10 @@ class CivMcCivFace(commands.Bot):
         turn_number = values["value3"]
 
         game_data = self.brains.game_db.get(game_name)
+        if not game_data:
+            logger.warning("Got webhook for game {}. That game does not exists in my database".format(game_name))
+            logger.info("These are the games currently available: {}".format(self.brains.game_db.keys()))
+            return
         player_data = game_data["players"].get(in_game_name)
 
         channel_id = self.brains.get_channel_for_game(game_name)

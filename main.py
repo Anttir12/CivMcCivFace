@@ -36,21 +36,21 @@ else:
     with open(GLOBAL_SETTINGS, "w") as file:
         file.write("{}")
 
-bot = CivMcCivFace(GAME_FILE, GUILD_NAME, GLOBAL_SETTINGS, command_prefix="!")
 
-
-async def start_bot():
+async def start_bot(bot):
     logger.info("Staring bot")
     await bot.start(TOKEN)
 
 
 def main():
+    bot = CivMcCivFace(GAME_FILE, GUILD_NAME, GLOBAL_SETTINGS, command_prefix="!")
     loop = asyncio.get_event_loop()
-    loop.create_task(start_bot())
+    loop.create_task(start_bot(bot))
     try:
         bot_thread = threading.Thread(target=loop.run_forever)
         bot_thread.start()
         # This is a blocking call. Exiting this should continue to stop the bot (loop)
+        http_server.bot = bot
         http_server.app.run(host='0.0.0.0', port=8888)
     finally:
         loop.stop()
