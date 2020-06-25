@@ -19,8 +19,8 @@ class McCivBrains:
     def create_game(self, game_name, channel_id, channel_name):
         if game_name in self.game_db:
             raise McCivBrainException("game \"{}\" already exists".format(game_name))
-
-        game_data = {"turn": 0, "players": {}, "channel": {"id": channel_id, "name": channel_name}, "player_turn_order":[""]}
+        game_data = {"turn": 0, "players": {}, "channel": {"id": channel_id, "name": channel_name},
+                     "player_turn_order": [], "groups": []}
         self.save_game_data(game_name, game_data)
 
     def delete_game(self, game_name):
@@ -38,6 +38,20 @@ class McCivBrains:
             "mention": True,
             "early_mention": False
         }
+        self.save_game_data(game_name, game_data)
+
+    def notify_group(self, game_name, discord_group):
+        game_data = self.game_db.get(game_name)
+        if not game_data:
+            raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
+        game_data["groups"].append(discord_group)
+        self.save_game_data(game_name, game_data)
+
+    def remove_group(self, game_name, discord_group):
+        game_data = self.game_db.get(game_name)
+        if not game_data:
+            raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
+        game_data["groups"].remove(discord_group)
         self.save_game_data(game_name, game_data)
 
     def remove_player_from_game(self, game_name, ingame_name):

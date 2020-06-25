@@ -66,7 +66,8 @@ class CivMcCivFace(commands.Bot):
             mention = self.get_mention_for(discord_username)
         if not mention:
             mention = in_game_name
-        asyncio.run_coroutine_threadsafe(channel.send("{} your turn (turn {}, {})".format(mention, turn_number, game_name)), self.loop)
+        if channel:
+            asyncio.run_coroutine_threadsafe(channel.send("{} your turn (turn {}, {})".format(mention, turn_number, game_name)), self.loop)
         self.send_on_deck_message(game_name, in_game_name, channel)
         self.brains.save_game_database()
 
@@ -82,7 +83,8 @@ class CivMcCivFace(commands.Bot):
         next_player = self.get_next_player(game_name, player_name)
         if next_player:
             mention = self.get_mention_for(next_player)
-            asyncio.run_coroutine_threadsafe(channel.send("{} you're on deck.".format(mention)), self.loop)
+            if channel:
+                asyncio.run_coroutine_threadsafe(channel.send("{} you're on deck.".format(mention)), self.loop)
 
     def get_next_player(self, game_name, player_name):
         players = self.brains.game_db.get(game_name).get("player_turn_order")
@@ -93,7 +95,7 @@ class CivMcCivFace(commands.Bot):
         next_player = self.get_player_from_list(player_name, players)
         game_data = self.brains.game_db.get(game_name)
         player_data = game_data["players"].get(next_player)
-        if player_data.get("early_mention"):
+        if player_data and player_data.get("early_mention"):
             return self.brains.get_discord_username(game_name, next_player)
 
     def get_player_from_list(self, player_name, players):
