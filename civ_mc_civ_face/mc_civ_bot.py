@@ -56,6 +56,15 @@ class CivMcCivFace(commands.Bot):
             logger.warning("Got webhook for game {}. That game does not exists in my database".format(game_name))
             logger.info("These are the games currently available: {}".format(self.brains.game_db.keys()))
             return
+
+        if game_data.get("turn") == turn_number and game_data.get("turn_player") == in_game_name:
+            logger.info("Received duplicate message about game {}, turn {}, turn_player {}".format(game_name, turn_number, in_game_name))
+            return
+
+        game_data["turn"] = turn_number
+        game_data["turn_player"] = in_game_name
+        self.brains.save_game_data(game_name, game_data)
+
         player_data = game_data["players"].get(in_game_name)
 
         channel_id = self.brains.get_channel_for_game(game_name)
@@ -69,7 +78,6 @@ class CivMcCivFace(commands.Bot):
         if channel:
             asyncio.run_coroutine_threadsafe(channel.send("{} your turn (turn {}, {})".format(mention, turn_number, game_name)), self.loop)
         self.send_on_deck_message(game_name, in_game_name, channel)
-        self.brains.save_game_database()
 
     def get_mention_for(self, discord_username):
         mention = discord_username
