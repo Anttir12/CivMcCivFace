@@ -20,19 +20,21 @@ GAME_FILE = os.getenv("GAME_FILE_PATH")
 GLOBAL_SETTINGS = os.getenv("GLOBAL_SETTINGS")
 bot_location = os.getcwd()
 if not GAME_FILE:
-    GAME_FILE = os.path.join(bot_location, "game_file.json")
+    GAME_FILE = os.path.join(bot_location, ".bot_data", "game_file.json")
 if os.path.exists(GAME_FILE):
     if not os.path.isfile(GAME_FILE):
         raise Exception("{} exists and is not a file!")
 else:
+    os.makedirs(os.path.dirname(GAME_FILE), exist_ok=True)
     with open(GAME_FILE, "w") as file:
         file.write("{}")
 if not GLOBAL_SETTINGS:
-    GLOBAL_SETTINGS = os.path.join(bot_location, "global_settings.json")
+    GLOBAL_SETTINGS = os.path.join(bot_location, ".bot_data", "global_settings.json")
 if os.path.exists(GLOBAL_SETTINGS):
     if not os.path.isfile(GLOBAL_SETTINGS):
         raise Exception("{} exists and is not a file!")
 else:
+    os.makedirs(os.path.dirname(GLOBAL_SETTINGS), exist_ok=True)
     with open(GLOBAL_SETTINGS, "w") as file:
         file.write("{}")
 

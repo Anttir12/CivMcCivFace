@@ -131,5 +131,6 @@ dmypy.json
 # JetBrains
 .idea/
 
+.bot_data/
 game_file.json
 global_settings.json
