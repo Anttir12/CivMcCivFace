@@ -9,8 +9,11 @@ class McCivBrains:
 
     def __init__(self, game_file_location):
         self.game_file_location = game_file_location
+        self.game_db = self._read_game_db()
+
+    def _read_game_db(self):
         with open(self.game_file_location, "r") as file:
-            self.game_db = json.loads(file.read())
+            return json.loads(file.read())
 
     def reset(self):
         self.game_db = {}
