@@ -49,7 +49,7 @@ class CivMcCivFace(commands.Bot):
     def handle_webhook_message(self, values: dict):
         game_name = values["value1"]
         in_game_name = values["value2"]
-        turn_number = values["value3"]
+        turn_number = int(values["value3"])
 
         game_data = self.brains.game_db.get(game_name)
         if not game_data:
@@ -61,7 +61,7 @@ class CivMcCivFace(commands.Bot):
             logger.info("Received duplicate message about game {}, turn {}, turn_player {}".format(game_name, turn_number, in_game_name))
             return
 
-        game_data["turn"] = int(turn_number)
+        game_data["turn"] = turn_number
         game_data["turn_player"] = in_game_name
         self.brains.save_game_data(game_name, game_data)
 
