@@ -35,7 +35,7 @@ class McCivBrains:
     def add_player_to_game(self, game_name, in_game_name, discord_name):
         game_data = self.game_db.get(game_name)
         if not game_data:
-            raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         game_data["players"][in_game_name] = {
             "discord_name": discord_name,
             "mention": True,
@@ -46,23 +46,23 @@ class McCivBrains:
     def notify_group(self, game_name, discord_group):
         game_data = self.game_db.get(game_name)
         if not game_data:
-            raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         game_data["groups"].append(discord_group)
         self.save_game_data(game_name, game_data)
 
     def remove_group(self, game_name, discord_group):
         game_data = self.game_db.get(game_name)
         if not game_data:
-            raise McCivBrainException(":poop:ERROR: Could not find game \"{}\"".format(game_name))
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         game_data["groups"].remove(discord_group)
         self.save_game_data(game_name, game_data)
 
     def remove_player_from_game(self, game_name, ingame_name):
         game_data = self.game_db.get(game_name)
         if not game_data:
-            return ":poop:ERROR: Could not find game \"{}\"".format(game_name)
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         if ingame_name not in game_data["players"]:
-            return ":poop:ERROR: Player {} not in game \"{}\"".format(ingame_name, game_name)
+            raise McCivBrainException("Player {} not in game \"{}\"".format(ingame_name, game_name))
         else:
             del game_data["players"][ingame_name]
             self.save_game_database()
@@ -77,6 +77,8 @@ class McCivBrains:
 
     def get_discord_username(self, game_name, player_name):
         game_data = self.game_db.get(game_name)
+        if not game_data:
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         player = game_data["players"].get(player_name)
         if not player:
             return None
@@ -85,6 +87,8 @@ class McCivBrains:
 
     def get_channel_for_game(self, game_name):
         game_data = self.game_db.get(game_name)
+        if not game_data:
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
         return game_data.get("channel", {}).get("id") if game_data else None
 
     def toggle_mention(self, game_name, author):
