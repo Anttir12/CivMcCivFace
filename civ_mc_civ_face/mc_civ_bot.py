@@ -61,7 +61,7 @@ class CivMcCivFace(commands.Bot):
             logger.info("Received duplicate message about game {}, turn {}, turn_player {}".format(game_name, turn_number, in_game_name))
             return
 
-        game_data["turn"] = turn_number
+        game_data["turn"] = int(turn_number)
         game_data["turn_player"] = in_game_name
         self.brains.save_game_data(game_name, game_data)
 
