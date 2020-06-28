@@ -108,3 +108,20 @@ class McCivBrains:
                 data["early_mention"] = not data.get("early_mention")
                 self.save_game_database()
                 return data.get("early_mention")
+
+    def whose_turn(self, game_name):
+        """
+        :param game_name: name of the game
+        :return: Player or discord name and True if the returned name is discord name, else False
+        """
+        game_data = self.game_db.get(game_name)
+        if not game_data:
+            raise McCivBrainException("Could not find game \"{}\"".format(game_name))
+        player = game_data.get("turn_player")
+        if player:
+            discord_username = self.get_discord_username(game_name, player)
+            if discord_username:
+                return discord_username, True
+            return player, False
+        else:
+            raise McCivBrainException("No turn information available??")
