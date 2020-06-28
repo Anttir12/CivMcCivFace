@@ -3,6 +3,7 @@ def get_test_game_file():
     test_game_file = {
         "test": {
             "turn": 0,
+            "turn_player": "civ_nick",
             "players": {
                 "civ_nick": {
                     "discord_name": "discord_id#1234",

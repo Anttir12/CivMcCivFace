@@ -95,11 +95,26 @@ class MyTestCase(unittest.TestCase):
         channel_id = self.brains.get_channel_for_game("test")
         self.assertEqual(123456789, channel_id)
 
-    def  test_get_channel_for_nonexistent_game(self):
+    def test_get_channel_for_nonexistent_game(self):
         with self.assertRaises(McCivBrainException) as context:
             self.brains.get_channel_for_game("bar")
         self.assertEqual("Could not find game \"bar\"", str(context.exception))
 
+    def test_whose_turn(self):
+        self.brains.game_db["test"]["turn_player"] = "foobar"  # Manually set the turn for foobar
+        player, is_discord_name = self.brains.whose_turn("test")
+        self.assertFalse(is_discord_name)
+        self.assertEqual("foobar", player)
+
+    def test_whose_turn_with_discord_name(self):
+        player, is_discord_name = self.brains.whose_turn("test")
+        self.assertTrue(is_discord_name)
+        self.assertEqual("discord_id#1234", player)
+
+    def test_whose_turn_with_game_not_found(self):
+        with self.assertRaises(McCivBrainException) as context:
+            self.brains.whose_turn("barfoo")
+        self.assertEqual("Could not find game \"barfoo\"", str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()

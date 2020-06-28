@@ -1,6 +1,7 @@
 import json
 
 from discord.ext import commands
+from discord.ext.commands import Context
 
 from civ_mc_civ_face.mc_civ_brains import McCivBrains, McCivBrainException
 
@@ -83,11 +84,24 @@ class Game(commands.Cog):
                                                                                  sort_keys=True)))
 
     @commands.command()
+    async def whose_turn(self, ctx, game_name, ping=False):
+        try:
+            player, discord_name = self.bot_brains.whose_turn(game_name)
+            if discord_name and ping:
+                mention = await self.get_mention_from_context(ctx, player)
+                player = mention if mention else player
+            await ctx.send("{}! It is your turn in the game \"{}\"".format(player, game_name))
+        except McCivBrainException as e:
+            await self.send_error_message(ctx, e)
+
+    @commands.command()
     async def reset(self, ctx):
         """ Resets the game database. You probably don't want to use this """
         self.bot_brains.reset()
         await ctx.send("Game DB has been reset")
 
-
     async def send_error_message(self, ctx, error):
         await ctx.send(":poop: ERROR: {} :poop:".format(error))
+
+    async def get_mention_from_context(self, ctx: Context, discord_name: str):
+        return next((user.mention for user in ctx.channel.members if str(user).startswith(discord_name)), None)
