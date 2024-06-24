@@ -80,8 +80,9 @@ class Game(commands.Cog):
     @commands.command()
     async def list_games(self, ctx):
         """ Bot prints entire game db in json format """
-        await ctx.send("Here are currently tracked games:\n{}".format(json.dumps(self.bot_brains.game_db, indent=4,
-                                                                                 sort_keys=True)))
+        game_info_list = self.bot_brains.get_every_game_info()
+        for game_info in game_info_list:
+            await ctx.send("```\n{}```".format(game_info))
 
     @commands.command()
     async def whose_turn(self, ctx, game_name, ping=False):
@@ -99,6 +100,9 @@ class Game(commands.Cog):
         """ Resets the game database. You probably don't want to use this """
         self.bot_brains.reset()
         await ctx.send("Game DB has been reset")
+
+    async def cog_command_error(self, ctx, error):
+        await ctx.send(":poop: unhandled error: {}".format(error))
 
     async def send_error_message(self, ctx, error):
         await ctx.send(":poop: ERROR: {} :poop:".format(error))

@@ -100,6 +100,36 @@ class McCivBrains:
                 self.save_game_database()
                 return data.get("mention")
 
+    def get_every_game_info(self):
+        game_info = list()
+        for game in self.game_db:
+            game_info.append(self.get_game_info(game))
+        return game_info
+
+    def get_game_info(self, game_name):
+        game_data = self.game_db.get(game_name)
+        info = ""
+        if game_data:
+            info += "Game: {}\n".format(game_name)
+            info += "\tTurn: {}\n".format(game_data["turn"])
+            if "turn_player" in game_data:
+                info += "\tPlayer Turn: {}\n".format(game_data["turn_player"])
+            info += "\tAdded players: \n{}\n".format(self.get_player_info_for_game(game_name))
+        return info
+
+    def get_player_info_for_game(self, game_name, line_prefix="\t\t"):
+        info = ""
+        players = self.game_db[game_name]["players"]
+        for player, data in players.items():
+            info += "{prefix}{player}\n".format(prefix=line_prefix, player=player)
+            if "discord_name" in data:
+                info += "{prefix}\tDiscord name: {dname}\n".format(prefix=line_prefix, dname=data["discord_name"])
+            info += "{prefix}\tMention: {mention}\n".format(prefix=line_prefix, mention=data.get("mention", False))
+            info += "{prefix}\tEarly mention: {mention}\n".format(prefix=line_prefix, mention=data.get("early_mention", False))
+        if "player_turn_order" in self.game_db[game_name]:
+            info += "Player turn order: {}\n".format(" -> ".join(self.game_db[game_name]["player_turn_order"]))
+        return info
+
     def toggle_early_mention(self, game_name, author):
         game_data = self.game_db.get(game_name)
         for player, data in game_data.get("players").items():
